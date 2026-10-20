@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DriveAI">
+<title>DriveAI — Smart Driving</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ LOGIN ============ -->
+  <section class="screen" id="sLogin">
+    <div class="loginwrap">
+      <div class="logo big"><svg viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round"><path d="M3 12h4l2-7 4 14 2-7h6"/></svg></div>
+      <h1>DriveAI</h1>
+      <p class="tagline">AI traffic management &amp; intelligent driver assistance</p>
+      <div class="seg" id="authTabs"><button class="on" data-m="in" type="button">Sign in</button><button data-m="up" type="button">Create account</button></div>
+      <form id="authForm" autocomplete="on" novalidate>
+        <input class="inp" id="auName" placeholder="Full name" autocomplete="name" hidden>
+        <input class="inp" id="auEmail" type="email" placeholder="Email" autocomplete="email" inputmode="email">
+        <input class="inp" id="auPass" type="password" placeholder="Password (min 6 characters)" autocomplete="current-password">
+        <div class="formerr" id="authErr"></div>
+        <button class="btn primary" type="submit" id="authBtn">Sign in</button>
+      </form>
+      <button class="btn ghost" id="demoLogin" type="button">Use demo account</button>
+      <button class="linkbtn" id="guestLogin" type="button">Continue as guest</button>
+      <div class="fine">Demo login: demo@driveai.app / demo123</div>
+    </div>
+  </section>
+
+  <!-- ============ PLAN ============ -->
+  <section class="screen" id="sPlan">
+    <div id="planMap"></div>
+    <div class="plancard">
+      <div class="hello">Hi, <b id="hiName">driver</b> · where to?</div>
+      <div class="fld"><span class="pin a"></span><input id="inFrom" class="pin-in" placeholder="Starting point" autocomplete="off" enterkeyhint="search"><button id="btnLoc" type="button" aria-label="Use my location">◎</button><button id="btnPickFrom" type="button" aria-label="Pick start on map">📌</button></div>
+      <div class="fld"><span class="pin b"></span><input id="inTo" class="pin-in" placeholder="Destination" autocomplete="off" enterkeyhint="search"><button id="btnSwap" type="button" aria-label="Swap">⇅</button><button id="btnPickTo" type="button" aria-label="Pick destination on map">📌</button></div>
+      <div class="sugg" id="sugg"></div>
+    </div>
+    <div class="sheet" id="routeSheet"></div>
+  </section>
+
+  <!-- ============ TRIP ============ -->
+  <section class="screen" id="sTrip">
+    <div id="tripMap"></div>
+    <div class="gbanner">
+      <div class="gico" id="navIco">↑</div>
+      <div class="gmid"><div class="gdist" id="navDist">—</div><div class="gstreet" id="navTxt">Starting trip…</div></div>
+      <button class="gmic" id="cVoice" aria-label="Voice guidance">🔊</button>
+    </div>
+    <div class="gthen" id="navThenBox">Then <span id="navThen"></span></div>
+
+    <div class="pips" id="pips">
+      <div class="pip" id="pipCam" data-l="📷 CAMERA">
+        <div class="piptag"><b>📷 Front camera</b><span class="chip info" id="sfLane">LANE 2</span></div>
+        <div class="feedwrap" id="camWrap"></div>
+      </div>
+      <div class="pip" id="pipJunc" data-l="🚦 JUNCTION">
+        <div class="piptag"><b>🚦 Adaptive junction</b><button class="mini" id="btnSurge" type="button">Surge</button><button class="mini emg" id="btnJEmg" type="button">🚑</button></div>
+        <div class="feedwrap sq" id="juncWrap"></div>
+        <div id="juncPanel"></div>
+      </div>
+    </div>
+
+    <div class="rbtns">
+      <button id="cCam" class="on" aria-label="Camera view">📷</button>
+      <button id="cJunc" class="on" aria-label="Junction view">🚦</button>
+      <button id="cDest" aria-label="Show whole route to destination">🏁</button>
+      <button id="cEvents" aria-label="Trip events">⚠<span class="badge" id="evBadge"></span></button>
+      <button id="cEmg" aria-label="Emergency vehicle">🚑</button>
+      <button id="cNight" aria-label="Night mode">🌙</button>
+      <button id="cSpeed" aria-label="Demo speed">8×</button>
+    </div>
+
+    <button class="recenter" id="btnRecenter" type="button">➤ Re-center</button>
+    <div class="ttoast" id="tripToast"></div>
+
+    <div class="statrow">
+      <div class="speedsign" id="hLimit">50</div>
+      <div class="spdbub"><b id="hSpeed">0</b><span>km/h</span></div>
+      <div class="sigpill"><div class="signal mini"><div class="light" id="hR"></div><div class="light" id="hY"></div><div class="light" id="hG"></div></div><div class="sigtxt"><b id="hSigT">No signal</b><span id="hSigD">—</span></div></div>
+      <div class="scorepill"><b id="hScore">100</b><span>safety</span></div>
+    </div>
+
+    <div class="evsheet" id="evSheet">
+      <div class="evhead"><b>Trip events</b><span class="chip warn" id="vCount">0 violations</span><button id="evClose" type="button">Close</button></div>
+      <div class="alerts" id="tripAlerts"></div>
+    </div>
+
+    <div class="gbar">
+      <div class="gprog"><i id="hProg"></i></div>
+      <button class="gbtn" id="cReroute" aria-label="Find faster route">🔀</button>
+      <div class="gmain"><div class="geta"><b id="hEta">0</b> min</div><div class="gsub"><span><span id="hRem">0.0</span> km</span><span>·</span><span id="hClock">--:--</span><span class="chip ok" id="hMode">CLEAR</span></div></div>
+      <button class="gbtn" id="cEnd" aria-label="End trip">✕</button>
+    </div>
+  </section>
+
+  <!-- ============ SUMMARY ============ -->
+  <section class="screen" id="sSummary"><div class="scroll" id="sumBody"></div></section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="screen" id="sHistory">
+    <div class="scroll"><div class="pagehead"><h2>Trips</h2><p>Your driving history &amp; scores</p></div><div id="histBody"></div></div>
+  </section>
+
+  <!-- ============ PROFILE ============ -->
+  <section class="screen" id="sProfile">
+    <div class="scroll"><div class="pagehead"><h2>Profile</h2><p id="profSub"></p></div><div id="profBody"></div></div>
+  </section>
+
+  <nav id="tabbar">
+    <button data-s="sPlan" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg><span>Drive</span></button>
+    <button data-s="sHistory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Trips</span></button>
+    <button data-s="sProfile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Profile</span></button>
+  </nav>
+  <div id="toast"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="engines.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
